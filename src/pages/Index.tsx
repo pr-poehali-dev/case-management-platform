@@ -4,10 +4,42 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 import Icon from "@/components/ui/icon";
 
 const Index = () => {
   const [balance, setBalance] = useState(1250.5);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [username, setUsername] = useState("Player#1337");
+  const [depositAmount, setDepositAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+
+  const [adminCases, setAdminCases] = useState([]);
+  const [adminItems, setAdminItems] = useState([]);
+  const [newCaseName, setNewCaseName] = useState("");
+  const [newCasePrice, setNewCasePrice] = useState("");
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemRarity, setNewItemRarity] = useState("");
+  const [newItemPrice, setNewItemPrice] = useState("");
+
   const [inventory, setInventory] = useState([
     {
       id: 1,
@@ -25,13 +57,32 @@ const Index = () => {
     },
   ]);
 
-  const cases = [
+  const [cases, setCases] = useState([
     {
       id: 1,
       name: "Cyber Case",
       price: 50.0,
       image: "/img/d102cfa5-57d6-4d5b-adcd-f3879c171fad.jpg",
-      items: ["AK-47 | Cyberpunk", "Knife | Neon Edge", "Glock | Electric"],
+      items: [
+        {
+          name: "AK-47 | Cyberpunk",
+          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          rarity: "legendary",
+          price: 250,
+        },
+        {
+          name: "Knife | Neon Edge",
+          image: "/img/4f9bf786-9d6a-491e-8d46-82b79a4bb755.jpg",
+          rarity: "rare",
+          price: 180,
+        },
+        {
+          name: "Glock | Electric",
+          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          rarity: "common",
+          price: 45,
+        },
+      ],
       winChance: 15,
     },
     {
@@ -39,7 +90,26 @@ const Index = () => {
       name: "Elite Case",
       price: 100.0,
       image: "/img/d102cfa5-57d6-4d5b-adcd-f3879c171fad.jpg",
-      items: ["AWP | Dragon Lore", "Karambit | Fade", "M4A4 | Howl"],
+      items: [
+        {
+          name: "AWP | Dragon Lore",
+          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          rarity: "legendary",
+          price: 800,
+        },
+        {
+          name: "Karambit | Fade",
+          image: "/img/4f9bf786-9d6a-491e-8d46-82b79a4bb755.jpg",
+          rarity: "rare",
+          price: 600,
+        },
+        {
+          name: "M4A4 | Howl",
+          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          rarity: "epic",
+          price: 400,
+        },
+      ],
       winChance: 5,
     },
     {
@@ -47,10 +117,29 @@ const Index = () => {
       name: "Starter Case",
       price: 25.0,
       image: "/img/d102cfa5-57d6-4d5b-adcd-f3879c171fad.jpg",
-      items: ["P90 | Asiimov", "USP-S | Kill Confirmed", "Deagle | Blaze"],
+      items: [
+        {
+          name: "P90 | Asiimov",
+          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          rarity: "rare",
+          price: 80,
+        },
+        {
+          name: "USP-S | Kill Confirmed",
+          image: "/img/4f9bf786-9d6a-491e-8d46-82b79a4bb755.jpg",
+          rarity: "common",
+          price: 35,
+        },
+        {
+          name: "Deagle | Blaze",
+          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          rarity: "common",
+          price: 30,
+        },
+      ],
       winChance: 25,
     },
-  ];
+  ]);
 
   const [selectedCase, setSelectedCase] = useState(null);
   const [openingCase, setOpeningCase] = useState(false);
@@ -61,23 +150,157 @@ const Index = () => {
       setBalance(balance - caseData.price);
 
       setTimeout(() => {
+        const randomItem =
+          caseData.items[Math.floor(Math.random() * caseData.items.length)];
         const wonItem = {
           id: Date.now(),
-          name: caseData.items[
-            Math.floor(Math.random() * caseData.items.length)
-          ],
-          rarity: "common",
-          price: caseData.price * 0.8,
-          image: "/img/49d5fd17-c4a9-4bfe-904d-e43c21da6465.jpg",
+          name: randomItem.name,
+          rarity: randomItem.rarity,
+          price: randomItem.price,
+          image: randomItem.image,
         };
         setInventory([...inventory, wonItem]);
         setOpeningCase(false);
+        toast({
+          title: "🎉 Поздравляем!",
+          description: `Вы получили ${wonItem.name} (${wonItem.price} ₽)`,
+        });
       }, 3000);
     }
   };
 
+  const sellItem = (itemId) => {
+    const item = inventory.find((i) => i.id === itemId);
+    if (item) {
+      setBalance(balance + item.price);
+      setInventory(inventory.filter((i) => i.id !== itemId));
+      toast({
+        title: "✅ Продано",
+        description: `${item.name} продан за ${item.price} ₽`,
+      });
+    }
+  };
+
+  const depositMoney = (amount) => {
+    if (amount > 0) {
+      setBalance(balance + amount);
+      toast({
+        title: "💰 Пополнено",
+        description: `Баланс пополнен на ${amount} ₽`,
+      });
+      setDepositAmount("");
+    }
+  };
+
+  const withdrawMoney = () => {
+    const amount = parseFloat(withdrawAmount);
+    if (amount > 0 && amount <= balance) {
+      setBalance(balance - amount);
+      toast({
+        title: "📤 Выведено",
+        description: `${amount} ₽ отправлено на вывод`,
+      });
+      setWithdrawAmount("");
+    }
+  };
+
+  const addNewCase = () => {
+    if (newCaseName && newCasePrice) {
+      const newCase = {
+        id: Date.now(),
+        name: newCaseName,
+        price: parseFloat(newCasePrice),
+        image: "/img/d102cfa5-57d6-4d5b-adcd-f3879c171fad.jpg",
+        items: [],
+        winChance: 10,
+      };
+      setCases([...cases, newCase]);
+      setNewCaseName("");
+      setNewCasePrice("");
+      toast({
+        title: "✅ Кейс создан",
+        description: `Кейс "${newCase.name}" добавлен`,
+      });
+    }
+  };
+
+  const deleteCase = (caseId) => {
+    setCases(cases.filter((c) => c.id !== caseId));
+    toast({
+      title: "🗑️ Кейс удален",
+      description: "Кейс успешно удален",
+    });
+  };
+
+  const login = () => {
+    setIsLoggedIn(true);
+    toast({
+      title: "👋 Добро пожаловать",
+      description: "Вы успешно вошли в аккаунт",
+    });
+  };
+
+  const logout = () => {
+    setIsLoggedIn(false);
+    toast({
+      title: "👋 До свидания",
+      description: "Вы вышли из аккаунта",
+    });
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-inter flex items-center justify-center">
+        <Card className="w-full max-w-md gradient-case border-primary/20">
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Icon
+                  name="Gamepad2"
+                  size={24}
+                  className="text-primary-foreground"
+                />
+              </div>
+              <h1 className="text-2xl font-bold font-orbitron">CASE OPENING</h1>
+              <p className="text-muted-foreground">Войдите в аккаунт</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="username">Имя пользователя</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Введите имя"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Пароль</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Введите пароль"
+                />
+              </div>
+              <Button onClick={login} className="w-full gradient-primary">
+                Войти
+              </Button>
+              <Button variant="outline" className="w-full">
+                Зарегистрироваться
+              </Button>
+            </div>
+          </div>
+        </Card>
+        <Toaster />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground font-inter">
+      <Toaster />
+
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -98,10 +321,15 @@ const Index = () => {
                 <Icon name="Wallet" size={18} className="text-primary" />
                 <span className="font-semibold">{balance.toFixed(2)} ₽</span>
               </div>
-              <Button className="gradient-primary text-white font-semibold glow-effect">
-                <Icon name="Plus" size={16} className="mr-2" />
-                Пополнить
-              </Button>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">
+                  Привет, {username}!
+                </span>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  <Icon name="LogOut" size={16} className="mr-2" />
+                  Выйти
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -189,9 +417,31 @@ const Index = () => {
                         <h3 className="text-xl font-bold font-orbitron mb-2">
                           {caseData.name}
                         </h3>
-                        <p className="text-muted-foreground mb-4">
-                          Содержит: {caseData.items.slice(0, 2).join(", ")}...
-                        </p>
+
+                        {/* Item Preview */}
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Содержимое кейса:
+                          </p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {caseData.items.slice(0, 3).map((item, index) => (
+                              <div
+                                key={index}
+                                className="bg-card/50 p-2 rounded text-center"
+                              >
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-8 h-8 object-cover rounded mx-auto mb-1"
+                                />
+                                <p className="text-xs truncate">{item.name}</p>
+                                <p className="text-xs text-primary">
+                                  {item.price}₽
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -266,7 +516,7 @@ const Index = () => {
                           className="w-full h-32 object-cover rounded-lg mb-3"
                         />
                         <h4 className="font-bold mb-1">{item.name}</h4>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-3">
                           <Badge variant="secondary" className="text-xs">
                             {item.rarity}
                           </Badge>
@@ -276,7 +526,8 @@ const Index = () => {
                         </div>
                         <Button
                           size="sm"
-                          className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                          onClick={() => sellItem(item.id)}
+                          className="w-full bg-green-600 hover:bg-green-700"
                         >
                           Продать
                         </Button>
@@ -306,7 +557,7 @@ const Index = () => {
                           />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold">Player#1337</h3>
+                          <h3 className="text-xl font-bold">{username}</h3>
                           <p className="text-muted-foreground">Уровень: 15</p>
                         </div>
                       </div>
@@ -362,6 +613,42 @@ const Index = () => {
                     </h2>
 
                     <div className="space-y-4">
+                      <div className="bg-card p-4 rounded-lg">
+                        <Label htmlFor="deposit-amount">Сумма пополнения</Label>
+                        <div className="flex space-x-2 mt-2">
+                          <Input
+                            id="deposit-amount"
+                            type="number"
+                            placeholder="0.00"
+                            value={depositAmount}
+                            onChange={(e) => setDepositAmount(e.target.value)}
+                          />
+                          <Button
+                            onClick={() =>
+                              depositMoney(parseFloat(depositAmount))
+                            }
+                          >
+                            Пополнить
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="bg-card p-4 rounded-lg">
+                        <h3 className="font-bold mb-2">Быстрые суммы</h3>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[100, 500, 1000, 2500].map((amount) => (
+                            <Button
+                              key={amount}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => depositMoney(amount)}
+                            >
+                              {amount} ₽
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-2 gap-4">
                         <Button className="h-16 bg-yellow-600 hover:bg-yellow-700">
                           <Icon name="Banknote" size={24} className="mr-2" />
@@ -371,17 +658,6 @@ const Index = () => {
                           <Icon name="Gamepad2" size={24} className="mr-2" />
                           Steam Items
                         </Button>
-                      </div>
-
-                      <div className="bg-card p-4 rounded-lg">
-                        <h3 className="font-bold mb-2">Быстрые суммы</h3>
-                        <div className="grid grid-cols-4 gap-2">
-                          {[100, 500, 1000, 2500].map((amount) => (
-                            <Button key={amount} variant="outline" size="sm">
-                              {amount} ₽
-                            </Button>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -409,25 +685,28 @@ const Index = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Сумма к выводу
-                        </label>
+                        <Label htmlFor="withdraw-amount">Сумма к выводу</Label>
                         <div className="flex space-x-2">
-                          <input
+                          <Input
+                            id="withdraw-amount"
                             type="number"
                             placeholder="0.00"
-                            className="flex-1 px-3 py-2 bg-card border border-border rounded-lg"
+                            value={withdrawAmount}
+                            onChange={(e) => setWithdrawAmount(e.target.value)}
                           />
-                          <Button>Вывести</Button>
+                          <Button onClick={withdrawMoney}>Вывести</Button>
                         </div>
                       </div>
 
                       <div className="bg-card p-4 rounded-lg">
-                        <h3 className="font-bold mb-2">Реквизиты для вывода</h3>
-                        <input
+                        <Label htmlFor="withdraw-details">
+                          Реквизиты для вывода
+                        </Label>
+                        <Input
+                          id="withdraw-details"
                           type="text"
                           placeholder="Номер карты или кошелька"
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg"
+                          className="mt-2"
                         />
                       </div>
                     </div>
@@ -445,74 +724,125 @@ const Index = () => {
                       Админ-панель
                     </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      {/* Add New Case */}
                       <Card className="p-4 bg-card">
-                        <h3 className="font-bold mb-2">Управление кейсами</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Создание, редактирование и удаление кейсов
-                        </p>
-                        <Button size="sm" className="w-full">
-                          <Icon name="Package" size={16} className="mr-2" />
-                          Кейсы
-                        </Button>
+                        <h3 className="font-bold mb-4">Добавить кейс</h3>
+                        <div className="space-y-3">
+                          <Input
+                            placeholder="Название кейса"
+                            value={newCaseName}
+                            onChange={(e) => setNewCaseName(e.target.value)}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Цена кейса"
+                            value={newCasePrice}
+                            onChange={(e) => setNewCasePrice(e.target.value)}
+                          />
+                          <Button onClick={addNewCase} className="w-full">
+                            <Icon name="Plus" size={16} className="mr-2" />
+                            Создать кейс
+                          </Button>
+                        </div>
                       </Card>
 
+                      {/* Statistics */}
                       <Card className="p-4 bg-card">
-                        <h3 className="font-bold mb-2">
-                          Управление предметами
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Добавление предметов и настройка редкости
-                        </p>
-                        <Button size="sm" className="w-full">
-                          <Icon name="Sword" size={16} className="mr-2" />
-                          Предметы
-                        </Button>
+                        <h3 className="font-bold mb-4">Статистика</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Всего кейсов:</span>
+                            <span className="font-bold">{cases.length}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Активных пользователей:</span>
+                            <span className="font-bold">247</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Доход за день:</span>
+                            <span className="font-bold text-green-500">
+                              ₽15,420
+                            </span>
+                          </div>
+                        </div>
                       </Card>
+                    </div>
 
-                      <Card className="p-4 bg-card">
-                        <h3 className="font-bold mb-2">Настройка шансов</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Управление процентами выпадения
-                        </p>
-                        <Button size="sm" className="w-full">
-                          <Icon name="Percent" size={16} className="mr-2" />
-                          Шансы
-                        </Button>
-                      </Card>
+                    {/* Cases Management */}
+                    <div className="mb-8">
+                      <h3 className="text-xl font-bold mb-4">
+                        Управление кейсами
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {cases.map((caseData) => (
+                          <Card key={caseData.id} className="p-4 bg-card">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-bold">{caseData.name}</h4>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteCase(caseData.id)}
+                              >
+                                <Icon name="Trash2" size={14} />
+                              </Button>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Цена: {caseData.price} ₽
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Предметов: {caseData.items.length}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Шанс выигрыша: {caseData.winChance}%
+                            </p>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
 
-                      <Card className="p-4 bg-card">
-                        <h3 className="font-bold mb-2">Статистика</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Аналитика и отчеты
-                        </p>
-                        <Button size="sm" className="w-full">
-                          <Icon name="BarChart" size={16} className="mr-2" />
-                          Статистика
-                        </Button>
-                      </Card>
+                    {/* Additional Admin Functions */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="h-16">
+                            <Icon name="Percent" size={24} className="mr-2" />
+                            Настройка шансов
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>
+                              Настройка шансов выпадения
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>Редкость Common (60%)</Label>
+                              <Input type="number" placeholder="60" />
+                            </div>
+                            <div>
+                              <Label>Редкость Rare (25%)</Label>
+                              <Input type="number" placeholder="25" />
+                            </div>
+                            <div>
+                              <Label>Редкость Legendary (15%)</Label>
+                              <Input type="number" placeholder="15" />
+                            </div>
+                            <Button className="w-full">Сохранить</Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
 
-                      <Card className="p-4 bg-card">
-                        <h3 className="font-bold mb-2">Пользователи</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Управление аккаунтами
-                        </p>
-                        <Button size="sm" className="w-full">
-                          <Icon name="Users" size={16} className="mr-2" />
-                          Пользователи
-                        </Button>
-                      </Card>
+                      <Button className="h-16">
+                        <Icon name="Users" size={24} className="mr-2" />
+                        Пользователи
+                      </Button>
 
-                      <Card className="p-4 bg-card">
-                        <h3 className="font-bold mb-2">Настройки</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Общие настройки сайта
-                        </p>
-                        <Button size="sm" className="w-full">
-                          <Icon name="Settings" size={16} className="mr-2" />
-                          Настройки
-                        </Button>
-                      </Card>
+                      <Button className="h-16">
+                        <Icon name="BarChart" size={24} className="mr-2" />
+                        Аналитика
+                      </Button>
                     </div>
                   </div>
                 </Card>
